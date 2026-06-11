@@ -4,14 +4,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const builtins = b.addLibrary(.{
-        .name = "builtins",
-        .linkage = .static,
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/builtins.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
+    const builtins = b.addModule("builtins", .{
+        .root_source_file = b.path("src/builtins.zig"),
+        .target = target,
+        .optimize = optimize,
     });
 
     const exe = b.addExecutable(.{
@@ -21,7 +17,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .imports = &.{
-                .{ .name = "builtins", .module = builtins.root_module },
+                .{ .name = "builtins", .module = builtins },
             },
         }),
     });

@@ -45,10 +45,10 @@ pub fn INP(value: int) void {
  
 // 1010 'FSH' : Flush values in special output registers to screen (still in discussion)
 pub fn FSH_S() void {
-    std.debug.print("value: {}\n", .{s[akk]});
+    std.debug.print("{}", .{s[akk]});
 }
 pub fn FSH_B() void {
-    std.debug.print("value: {b}\n", .{s[akk]});
+    std.debug.print("{b}", .{s[akk]});
 }
 
 /// 1011 'AWT' : Await 12 bit input from argument input device, block execution until input given. Input is put into accumulator. 
