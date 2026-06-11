@@ -4,13 +4,25 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const builtins = b.addLibrary(.{
+        .name = "builtins",
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/builtins.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
     const exe = b.addExecutable(.{
         .name = "comcomLang",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
-            .imports = &.{},
+            .imports = &.{
+                .{ .name = "builtins", .module = builtins.root_module },
+            },
         }),
     });
 
@@ -26,8 +38,6 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-
-
 
     const exe_tests = b.addTest(.{
         .root_module = exe.root_module,
