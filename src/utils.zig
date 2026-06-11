@@ -128,10 +128,58 @@ pub const ComComCode = struct {
 		}
 	};
 
+	pub const Block = struct {
+		pub const Kind = enum {
+			@"if",
+
+			fn getHeadLineCount(self: Kind) usize {
+				return switch (self) {
+					else => 0,
+				};
+			}
+		};
+
+		kind: Kind,
+
+		deferStack: std.ArrayList(Line) = .empty,
+		lineStart: usize,
+
+		pub fn open(kind: Kind, code: *ComComCode) Block {
+			const block: Block = .{
+				.kind = kind,
+				.lineStart = code.currentLine,
+			};
+			return block;
+		}
+
+		pub fn close(_: *Block, _: *ComComCode) void {
+
+		}
+	};
+
 	lines: std.ArrayList(Line) = .empty,
+	stack: std.ArrayList(Block) = .empty,
+	currentLine: usize = 0,
 
 	pub fn deinit(self: *@This(), gpa: Allocator) void {
 		self.lines.deinit(gpa);
+	}
+
+	pub fn openBlock(self: *ComComCode, gpa: Allocator, kind: Block.Kind) void {
+		self.stack.append(gpa,.open(kind, self));
+	}
+
+	pub fn closeBlock(self: *ComComCode) void {
+		var block = self.stack.pop() orelse return;
+		block.close(self);
+	}
+
+	pub fn append(self: *ComComCode, gpa: Allocator, line: Line) error{OutOfMemory}!void {
+		if(self.stack.peek()) |body| {
+			body.append(self, gpa, line);
+		}
+		try self.lines.append(gpa, line);
+		self.currentLine += 1;
 	}
 
 	pub fn format(self: *const @This(), writer: *Io.Writer) Io.Writer.Error!void {
