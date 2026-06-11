@@ -6,3 +6,6 @@ Two modules are provided. `builtin` and `std`
 `std` is the languages standart library as the normal zig std is not supported.
 
 (much of the main code is inspired / copied from: https://github.com/PixelGuys/Cubyz-linter)
+
+## Currently supported zig concepts:
+- Nothing
