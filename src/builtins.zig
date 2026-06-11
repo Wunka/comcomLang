@@ -1,7 +1,7 @@
 /// From Readme: https://github.com/alexsuperzocker/comcomcom
 
 const std = @import("std");
-const int = i12;
+pub const int = i12;
 
 var s:[4096]int = @splat(0);
 var f:[4096]bool = @splat(true);

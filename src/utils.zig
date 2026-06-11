@@ -1,6 +1,7 @@
 const std = @import("std");
 const Io = std.Io;
 const Allocator = std.mem.Allocator;
+const builtins = @import("builtins");
 
 pub const Context = struct {
 	data: [:0]const u8,
@@ -88,4 +89,54 @@ pub const Context = struct {
         self.printError(gpa, message, self.ast.tokenLocation(0, @intCast(self.ast.tokens.len-1)));
         return &.{};
     }
+};
+
+pub const ComComCode = struct {
+	pub const Instruction = enum {
+		ADD,
+		SUB,
+		MUL,
+		DIV,
+		LOD,
+		STO,
+		INP,
+		JMP,
+		JMZ,
+		JGZ,
+		FSH_S,
+		FSH_B,
+		AWT,
+		HLT,
+		FNC,
+		ISF,
+		DEL,
+	};
+
+	pub const Line = struct {
+		cmd: Instruction,
+		input: ?builtins.int,
+
+		pub fn format(self: *const @This(), writer: *Io.Writer) Io.Writer.Error!void {
+			if(self.input) |input| {
+				try writer.print("{t} #{x}", .{self.cmd, input});
+			} else {
+				switch(self.cmd) {
+					.FSH_B, .FSH_S => try writer.print("FSH", .{}),
+					else => try writer.print("{t}", .{self.cmd}),
+				}
+			}
+		}
+	};
+
+	lines: std.ArrayList(Line) = .empty,
+
+	pub fn deinit(self: *@This(), gpa: Allocator) void {
+		self.lines.deinit(gpa);
+	}
+
+	pub fn format(self: *const @This(), writer: *Io.Writer) Io.Writer.Error!void {
+		for(self.lines.items, 0..) |line, i| {
+			try writer.print("{d} {f}\n", .{i+1, line});
+		}
+	}
 };
