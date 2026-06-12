@@ -150,12 +150,13 @@ pub const ComComCode = struct {
         deferStack: std.ArrayList(Line) = .empty,
         lineStart: builtins.uint,
 
-        pub fn open(kind: Kind, code: *ComComCode) Block {
-            const block: Block = .{
+        pub fn open(gpa: Allocator, kind: Kind, code: *ComComCode) error{OutOfMemory}!*Block {
+            const self = try gpa.create(Block);
+            self.* = .{
                 .kind = kind,
                 .lineStart = code.currentLine,
             };
-            return block;
+            return self;
         }
 
         pub fn close(self: *Block, gpa: Allocator, code: *ComComCode) error{OutOfMemory}!void {
@@ -193,6 +194,8 @@ pub const ComComCode = struct {
                 }),
                 else => {},
             }
+
+            gpa.destroy(self);
         }
 
         pub fn append(self: *Block, gpa: Allocator, line: Line) error{OutOfMemory}!void {
@@ -205,7 +208,7 @@ pub const ComComCode = struct {
     };
 
     lines: std.ArrayList(Line) = .empty,
-    stack: std.ArrayList(Block) = .empty,
+    stack: std.ArrayList(*Block) = .empty,
     currentLine: builtins.uint = 0,
 
     pub fn deinit(self: *@This(), gpa: Allocator) void {
@@ -213,7 +216,7 @@ pub const ComComCode = struct {
     }
 
     pub fn openBlock(self: *ComComCode, gpa: Allocator, kind: Block.Kind) error{OutOfMemory}!void {
-        try self.stack.append(gpa, .open(kind, self));
+        try self.stack.append(gpa, try .open(gpa, kind, self));
     }
 
     pub fn closeBlock(self: *ComComCode, gpa: Allocator) error{OutOfMemory}!void {
@@ -229,14 +232,14 @@ pub const ComComCode = struct {
     pub fn append(self: *ComComCode, gpa: Allocator, line: Line) error{OutOfMemory}!void {
         if (self.currentLine == std.math.maxInt(builtins.uint)) @panic("Out of lines");
         self.currentLine += 1;
-        if (self.stack.getLastOrNull()) |*body| {
+        if (self.stack.getLastOrNull()) |body| {
             try body.append(gpa, line);
         }
         try self.lines.append(gpa, line);
     }
 
     pub fn appendAssumeLineCount(self: *ComComCode, gpa: Allocator, line: Line) error{OutOfMemory}!void {
-        if (self.stack.getLastOrNull()) |*body| {
+        if (self.stack.getLastOrNull()) |body| {
             try body.append(gpa, line);
         }
         try self.lines.append(gpa, line);
