@@ -34,17 +34,16 @@ fn handleSimpleIf(ctx: *Context, gpa: Allocator, code: *ComComCode, index: std.z
 
     switch (ctx.ast.nodeTag(cond_expr)) {
         .less_than => {
-            code.openBlock(gpa, .if_g);
+            try code.openBlock(gpa, .if_g);
         },
         .equal_equal => {
-            code.openBlock(gpa, .if_e);
+            try code.openBlock(gpa, .if_e);
         },
         else => {
             ctx.printError(gpa, "Only < and == are currently supported in if conditions", ctx.ast.tokenLocation(0, ctx.ast.nodeMainToken(cond_expr)));
             return;
         },
     }
-    defer code.closeBlock();
 
     const left = ctx.ast.nodeData(cond_expr).node_and_node.@"0";
     const right = ctx.ast.nodeData(cond_expr).node_and_node.@"1";
@@ -56,7 +55,8 @@ fn handleSimpleIf(ctx: *Context, gpa: Allocator, code: *ComComCode, index: std.z
     if (ctx.ast.nodeTag(then_expr) != .block_semicolon and ctx.ast.nodeTag(then_expr) != .block) return;
     const range = ctx.ast.nodeData(then_expr).extra_range;
     const decl = ctx.ast.extraDataSlice(range, std.zig.Ast.Node.Index);
-    interpretBlock(ctx, gpa, &code, decl);
+    try interpretBlock(ctx, gpa, code, decl);
+    try code.closeBlock(gpa);
 }
 
 pub fn interpretBlock(ctx: *Context, gpa: Allocator, code: *ComComCode, decl: []const std.zig.Ast.Node.Index) error{OutOfMemory}!void {
@@ -75,7 +75,7 @@ pub fn run(ctx: *Context, gpa: Allocator) error{OutOfMemory}!void {
     defer code.deinit(gpa);
 
     const decl = try ctx.getFunctionBody(gpa, "main");
-    interpretBlock(ctx, gpa, &code, decl);
+    try interpretBlock(ctx, gpa, &code, decl);
 
     std.debug.print("{f}", .{code});
 }
