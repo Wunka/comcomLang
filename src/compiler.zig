@@ -29,18 +29,53 @@ fn handleCall(ctx: *Context, gpa: Allocator, code: *ComComCode, index: std.zig.A
     }
 }
 
+fn handleSimpleIf(ctx: *Context, gpa: Allocator, code: *ComComCode, index: std.zig.Ast.Node.Index) error{OutOfMemory}!void {
+    const cond_expr, const then_expr = ctx.ast.nodeData(index).node_and_node;
+
+    switch (ctx.ast.nodeTag(cond_expr)) {
+        .less_than => {
+            code.openBlock(gpa, .if_g);
+        },
+        .equal_equal => {
+            code.openBlock(gpa, .if_e);
+        },
+        else => {
+            ctx.printError(gpa, "Only < and == are currently supported in if conditions", ctx.ast.tokenLocation(0, ctx.ast.nodeMainToken(cond_expr)));
+            return;
+        },
+    }
+    defer code.closeBlock();
+
+    const left = ctx.ast.nodeData(cond_expr).node_and_node.@"0";
+    const right = ctx.ast.nodeData(cond_expr).node_and_node.@"1";
+
+    // TODO handle loading of varibles inside conditions
+    _ = left;
+    _ = right;
+
+    if (ctx.ast.nodeTag(then_expr) != .block_semicolon and ctx.ast.nodeTag(then_expr) != .block) return;
+    const range = ctx.ast.nodeData(then_expr).extra_range;
+    const decl = ctx.ast.extraDataSlice(range, std.zig.Ast.Node.Index);
+    interpretBlock(ctx, gpa, &code, decl);
+}
+
+pub fn interpretBlock(ctx: *Context, gpa: Allocator, code: *ComComCode, decl: []const std.zig.Ast.Node.Index) error{OutOfMemory}!void {
+    for (decl) |index| {
+        // std.debug.print("TAG: {t} LINE: {s} \n", .{ctx.ast.nodeTag(index), ctx.ast.getNodeSource(index)});
+        try switch (ctx.ast.nodeTag(index)) {
+            .call_one, .call_one_comma => handleCall(ctx, gpa, code, index),
+            .if_simple => handleSimpleIf(ctx, gpa, code, index),
+            else => {},
+        };
+    }
+}
+
 pub fn run(ctx: *Context, gpa: Allocator) error{OutOfMemory}!void {
     var code: ComComCode = .{};
     defer code.deinit(gpa);
 
     const decl = try ctx.getFunctionBody(gpa, "main");
-    for (decl) |index| {
-        // std.debug.print("TAG: {t} LINE: {s} \n", .{ctx.ast.nodeTag(index), ctx.ast.getNodeSource(index)});
-        try switch (ctx.ast.nodeTag(index)) {
-            .call_one, .call_one_comma => handleCall(ctx, gpa, &code, index),
-            else => {},
-        };
-    }
+    interpretBlock(ctx, gpa, &code, decl);
 
     std.debug.print("{f}", .{code});
 }

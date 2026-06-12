@@ -3,18 +3,18 @@ const std = @import("std");
 
 pub const int = i12;
 pub const uint = u12;
-pub const memory_size = std.math.maxInt(uint);
+pub const memory_size = std.math.maxInt(uint) + 1;
 
-var s:[memory_size]int = @splat(0);
-var f:[memory_size]bool = @splat(true);
+var s: [memory_size]int = @splat(0);
+var f: [memory_size]bool = @splat(true);
 const akk = 0;
 
-/// 0000 'ADD' : adds value at argument adress onto accumulator 
+/// 0000 'ADD' : adds value at argument adress onto accumulator
 pub fn ADD(value: uint) void {
     s[akk] += s[@intCast(value)];
 }
 
-/// 0001 'SUB' : subtracts value at argument adress from accumulator 
+/// 0001 'SUB' : subtracts value at argument adress from accumulator
 pub fn SUB(value: uint) void {
     s[akk] -= s[@intCast(value)];
 }
@@ -24,12 +24,12 @@ pub fn MUL(value: uint) void {
     s[akk] *= s[@intCast(value)];
 }
 
-/// 0011 'DIV' : divides value at accumulator with value at argument adress 
+/// 0011 'DIV' : divides value at accumulator with value at argument adress
 pub fn DIV(value: uint) void {
     s[akk] /= s[@intCast(value)];
 }
 
-/// 0100 'LOD' : load value at argument adress into accumulator 
+/// 0100 'LOD' : load value at argument adress into accumulator
 pub fn LOD(value: uint) void {
     s[akk] = s[@intCast(value)];
 }
@@ -40,11 +40,11 @@ pub fn STO(value: uint) void {
     f[@intCast(value)] = false;
 }
 
-/// 0110 'INP' : put argument into accumulator 
+/// 0110 'INP' : put argument into accumulator
 pub fn INP(value: int) void {
     s[akk] = value;
 }
- 
+
 // 1010 'FSH' : Flush values in special output registers to screen (still in discussion)
 pub fn FSH_S() void {
     std.debug.print("{}", .{s[akk]});
@@ -53,7 +53,7 @@ pub fn FSH_B() void {
     std.debug.print("{b}", .{s[akk]});
 }
 
-/// 1011 'AWT' : Await 12 bit input from argument input device, block execution until input given. Input is put into accumulator. 
+/// 1011 'AWT' : Await 12 bit input from argument input device, block execution until input given. Input is put into accumulator.
 pub fn AWT() void {
     var gpa: std.heap.DebugAllocator(.{}) = .init;
     var threaded = std.Io.Threaded.init(gpa.allocator(), .{});
@@ -61,7 +61,7 @@ pub fn AWT() void {
     var buff: [10]u8 = undefined;
     var reader = stdin.reader(threaded.io(), &buff);
     const text = std.mem.trim(u8, reader.interface.takeDelimiter('\n') catch @panic("OOM") orelse return, &.{13});
-    switch(text[0]) {
+    switch (text[0]) {
         'u' => s[akk] = std.fmt.parseInt(int, text, 12) catch @panic("NOT VALID INPUT"),
         else => s[akk] = std.fmt.parseInt(int, text, 0) catch @panic("NOT VALID INPUT"),
     }
@@ -69,8 +69,8 @@ pub fn AWT() void {
 
 /// 1110 'ISF' : Is argument adress free aka not set via STO. Puts 1 into accumulator if adress is free, else 0
 pub fn ISF(value: int) void {
-    s[akk] = if(f[@intCast(value)]) 1 else 0;
-} 
+    s[akk] = if (f[@intCast(value)]) 1 else 0;
+}
 
 /// 1111 'DEL' : Frees (unsets) argument adress.
 pub fn DEL(value: int) void {

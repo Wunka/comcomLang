@@ -10,6 +10,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const cstd = b.addModule("cstd", .{
+        .root_source_file = b.path("src/cstd.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     const exe = b.addExecutable(.{
         .name = "comcomLang",
         .root_module = b.createModule(.{
@@ -18,6 +24,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "builtins", .module = builtins },
+                .{ .name = "cstd", .module = cstd},
             },
         }),
     });
