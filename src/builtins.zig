@@ -1,39 +1,41 @@
 /// From Readme: https://github.com/alexsuperzocker/comcomcom
-
 const std = @import("std");
-pub const int = i12;
 
-var s:[4096]int = @splat(0);
-var f:[4096]bool = @splat(true);
+pub const int = i12;
+pub const uint = u12;
+pub const memory_size = std.math.maxInt(uint);
+
+var s:[memory_size]int = @splat(0);
+var f:[memory_size]bool = @splat(true);
 const akk = 0;
 
 /// 0000 'ADD' : adds value at argument adress onto accumulator 
-pub fn ADD(value: int) void {
+pub fn ADD(value: uint) void {
     s[akk] += s[@intCast(value)];
 }
 
 /// 0001 'SUB' : subtracts value at argument adress from accumulator 
-pub fn SUB(value: int) void {
+pub fn SUB(value: uint) void {
     s[akk] -= s[@intCast(value)];
 }
 
 /// 0010 'MUL' : multiplies value at argument adress with accumulator
-pub fn MUL(value: int) void {
+pub fn MUL(value: uint) void {
     s[akk] *= s[@intCast(value)];
 }
 
 /// 0011 'DIV' : divides value at accumulator with value at argument adress 
-pub fn DIV(value: int) void {
+pub fn DIV(value: uint) void {
     s[akk] /= s[@intCast(value)];
 }
 
 /// 0100 'LOD' : load value at argument adress into accumulator 
-pub fn LOD(value: int) void {
+pub fn LOD(value: uint) void {
     s[akk] = s[@intCast(value)];
 }
 
 /// 0101 'STO' : store value from accumulator into argument adress
-pub fn STO(value: int) void {
+pub fn STO(value: uint) void {
     s[@intCast(value)] = s[akk];
     f[@intCast(value)] = false;
 }
